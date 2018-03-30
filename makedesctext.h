@@ -25,7 +25,8 @@
 #include <fstream>
 #include "nlohmann/json.hpp"
 
-void makedesctext();
+void makebridgetext();
+void makelocktext();
 std::string FloatToStrNonzeros(float x);
 std::string FindOpeningInfo( long id);
 std::string FindFairwayInfo( long id);
@@ -34,5 +35,6 @@ bool GetLatLonFromPOINT(std::string point, std::string &lat, std::string &lon);
 std::string FindCountryCode( long id);
 std::string FindOperatingTimes( long id);
 std::string CalcTimes( long from, long to);
+void OpenGpxObj();
 
 #endif // MAKEDESCTEXT_H

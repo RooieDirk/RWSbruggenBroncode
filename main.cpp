@@ -19,6 +19,7 @@
 #include "main.h"
 #include "readfiles.h"
 #include "makedesctext.h"
+#include "gpx.h"
 #include <stdio.h>
 #include <fstream>
 #include <curl/curl.h>
@@ -28,12 +29,23 @@
 // for convenience
 using json = nlohmann::json;
 
+/////////////////////////////////////////////////////////////////////////////////////////////
+//Filenames  Change if needed
+std::string LockIcon = std::string("Sluis"); //Do not add the ".png" extension
+std::string BridgeClosedIcon = std::string("Brug_dicht"); //Do not add the ".png" extension
+std::string BridgeOpenIcon = std::string("Brug_open"); //Do not add the ".png" extension
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+extern RWSbridges* gpxObj;
+
 extern MAPSTRINGSTRING bridge_map;
 extern MAPSTRINGSTRING opening_map;
 extern MAPSTRINGSTRING radiocallinpoint_map;
 extern MAPSTRINGSTRING fairway_map;
 extern MAPSTRINGSTRING isrs_map;
 extern MAPSTRINGSTRING operatingtimes_map;
+extern MAPSTRINGSTRING lock_map;
+extern MAPSTRINGSTRING chamber_map;
 
 std::string ServerAdress = "https://www.vaarweginformatie.nl/wfswms/dataservice/1.3/";
 int GeoGeneration;
@@ -185,32 +197,23 @@ void DoDownload(std::string SerName, std::string fname)
 int main(int argc, char **argv)
 {
     GetGeoGeneration();
-//     //DoDownload( std::string("lock"), std::string("lock.json"));
-//     //DoDownload( std::string("bridge"), std::string("bridge.json"));
-//     //DoDownload( std::string("administration"), std::string("administration.json"));
-//     DoDownload( std::string("fairway"), std::string("fairway.json"));
-//     DoDownload( std::string("operatingtimes"), std::string("operatingtimes.json"));
-//     //DoDownload( std::string("route"), std::string("route.json"));
-//     DoDownload( std::string("isrs"), std::string("isrs.json"));
-//     DoDownload( std::string("opening"), std::string("opening.json"));
-//     DoDownload( std::string("radiocallinpoint"), std::string("radiocallinpoint.json"));
-//     //DoDownload( std::string("berth"), std::string("berth.json"));
+    DownloadIntoMap( std::string("lock"), lock_map, std::string("Id"));
+    DownloadIntoMap( std::string("chamber"), chamber_map, std::string("Id"));
     DownloadIntoMap(std::string("bridge"), bridge_map, std::string("IsrsId"));
     DownloadIntoMap(std::string("fairway"), fairway_map, std::string("Id"));
     DownloadIntoMap(std::string("operatingtimes"), operatingtimes_map, std::string("Id"));
     DownloadIntoMap(std::string("isrs"), isrs_map, std::string("Id"));
     DownloadIntoMap(std::string("opening"), opening_map, std::string("Id"));
     DownloadIntoMap(std::string("radiocallinpoint"), radiocallinpoint_map, std::string("ParentId"));
-    //InitMapfiles();
-    makedesctext();
+//    InitMapfiles(); // Only if read from files instead of reading from www
+    
+    gpxObj = new RWSbridges("RWS_Bruggen.gpx");
+        gpxObj->OpenGpxFile(std::string( "vandaag" ));
+    
+    makebridgetext();
+    makelocktext();
+    
+    gpxObj->CloseGpxFile();
   
   return 0;
 }
-
-
-// int main(int argc, char **argv) 
-// {
-//     InitMapfiles();
-//     makedesctext();
-//     return 0;
-// }

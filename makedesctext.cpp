@@ -33,15 +33,29 @@ extern MAPSTRINGSTRING radiocallinpoint_map;
 extern MAPSTRINGSTRING fairway_map;
 extern MAPSTRINGSTRING isrs_map;
 extern MAPSTRINGSTRING operatingtimes_map;
+extern MAPSTRINGSTRING lock_map;
+extern MAPSTRINGSTRING chamber_map;
+
+extern std::string LockIcon;
+extern std::string BridgeClosedIcon;
+extern std::string BridgeOpenIcon;
+
+RWSbridges* gpxObj;
+std::string SymbolFile;
+
 //MAPSTRINGSTRING DescText_map;
 
 std::vector<std::string> months = {"**", " jan", " feb", " mrt", " apr", " mei", " jun", " jul", " aug", " sep", " okt", " nov", " dec"};
 
-void makedesctext()
+void OpenGpxObj()
+{
+    gpxObj = new RWSbridges("RWS_Bruggen.gpx");
+        gpxObj->OpenGpxFile(std::string( "vandaag" ));
+}
+
+void makebridgetext()
 {
     int count = 0;
-    RWSbridges* gpxObj = new RWSbridges("RWS_Bruggen.gpx");
-        gpxObj->OpenGpxFile(std::string( "vandaag" ));
         
     for (auto const& x : bridge_map)
     {
@@ -78,9 +92,16 @@ void makedesctext()
         {
             if ( x.second.find("\"CanOpen\":") != std::string::npos )
                 if ( j["CanOpen"] )
+                { 
                     t = "Beweegbaar";
+                    SymbolFile = BridgeOpenIcon;
+                }
                 else
+                {
                     t = "Vast  ";
+                    SymbolFile = BridgeClosedIcon;
+                }
+                    
             if ( x.second.find("\"Width\":") != std::string::npos )
             {
                 t.append("    Breedte: ");
@@ -110,6 +131,110 @@ void makedesctext()
         if ( x.second.find("\"OperatingTimesId\":") != std::string::npos )
         {
             t.append( FindOperatingTimes( j.at("OperatingTimesId") ));
+            SymbolFile = BridgeOpenIcon;
+        }
+        else
+            SymbolFile = BridgeClosedIcon;
+        
+        if ( t.length() > 0 )
+        {
+            desc.append(t.append("\n") );
+            t="";
+        }
+
+        std::cout << desc << std::endl << std::endl;
+        std::string lat, lon;
+        
+        if ( x.second.find("\"Geometry\":") != std::string::npos )
+            if ( GetLatLonFromPOINT( j.at("Geometry"), lat, lon))
+            {
+                gpxObj->AddWaypoint( lat, lon, std::string(""), SymbolFile, desc);
+            }
+    }
+}
+
+void makelocktext()
+{
+    int count = 0;
+        
+    for (auto const& x : lock_map)
+    {
+        std::string desc, t ;
+        SymbolFile = LockIcon;
+        json j = json::parse(x.second);
+        if ( x.second.find("\"IsrsId\":") != std::string::npos )
+        { // if not in NL don't border
+            if ( std::string("NL") != FindCountryCode(j.at("IsrsId")) )
+                continue;
+        }
+        
+//First line of output ("City") and ("Name")        
+        if ( x.second.find("\"City\":") != std::string::npos )
+        {
+            t = j.at("City");
+            if ( t.length() > 0 ) //There is a City name available
+                t.append( std::string(": ") );
+        }
+        if ( x.second.find("\"FairwayId\":") != std::string::npos ) 
+            t.append( FindFairwayInfo( j.at("FairwayId") ).append("\n") );
+        if ( x.second.find("\"Name\":") != std::string::npos )
+        {
+            t.append(j.at("Name"));
+        }
+        if ( t.length() > 0 )
+        {
+            desc.append(t.append("\n") );
+            t="";
+        }        
+        
+//2e line Remote controlled? VHF channel and tel.no.
+        if ( x.second.find("\"IsRemoteControlled\":") != std::string::npos )
+            if( j.at("IsRemoteControlled") == true )
+                t.append(std::string("Op afstand bediend.").append("\t"));
+        if ( x.second.find("\"PhoneNumber\":") != std::string::npos )
+            t.append(std::string("tel: ").append(j.at("PhoneNumber") ).append("\t")); 
+        t.append(FindVHFInfo( j.at("Id") ));    
+        if ( t.length() > 0 )
+        {
+            desc.append(t.append("\n") );
+            t="";
+        }
+        
+        if ( x.second.find("\"NumberOfChambers\":") != std::string::npos )
+        {
+            int count =  j.at("NumberOfChambers");
+            long int id = j.at("Id");
+            
+            MAPSTRINGSTRING::const_iterator ii;
+                for ( ii = chamber_map.begin(); ii != chamber_map.end(); ii++)
+                {
+                    json chamber = json::parse(ii->second);
+                    if ( (long int)chamber.at("ParentId") == id )
+                    {
+                        t.append("kolk").append( std::to_string (count)).append("\n");
+                        if (chamber.find("Length") != chamber.end() ) t.append("Lengte: ").append(FloatToStrNonzeros(chamber.at("Length"))).append(" \t");
+                        if (chamber.find("Width") != chamber.end() ) t.append("Breedte: ").append(FloatToStrNonzeros(chamber.at("Width"))).append(" \t");
+                        if (chamber.find("SillDepthBeBu") != chamber.end() ) t.append("Diepte-Bu: ").append(FloatToStrNonzeros(chamber.at("SillDepthBeBu"))).append(" \t");
+                        if (chamber.find("SillDepthBoBi") != chamber.end() ) t.append("Diepte-Bi: ").append(FloatToStrNonzeros(chamber.at("SillDepthBoBi")));
+                        if (chamber.find("Note") != chamber.end() ) t.append("\n").append("Note: ").append(chamber.at("Note"));
+                        t.append("\n");
+                        count--;
+                
+                    if ( count <= 0 ) break;
+                }
+            }            
+        }
+        if ( t.length() > 0 )
+        {
+            desc.append(t.append("\n") );
+            t="";
+        }
+        
+        
+///3th line Operating Times
+        if ( x.second.find("\"OperatingTimesId\":") != std::string::npos )
+        {
+            t.append( FindOperatingTimes( j.at("OperatingTimesId") ));
         }
         
         if ( t.length() > 0 )
@@ -124,10 +249,9 @@ void makedesctext()
         if ( x.second.find("\"Geometry\":") != std::string::npos )
             if ( GetLatLonFromPOINT( j.at("Geometry"), lat, lon))
             {
-                gpxObj->AddWaypoint( lat, lon, std::string(""), std::string( "Info-Info"), desc);
+                gpxObj->AddWaypoint( lat, lon, std::string(""), SymbolFile, desc);
             }
     }
-    gpxObj->CloseGpxFile();
 }
 
 std::string FloatToStrNonzeros(float x)

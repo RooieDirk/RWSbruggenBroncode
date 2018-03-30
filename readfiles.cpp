@@ -30,31 +30,34 @@ MAPSTRINGSTRING radiocallinpoint_map;
 MAPSTRINGSTRING fairway_map;
 MAPSTRINGSTRING isrs_map;
 MAPSTRINGSTRING operatingtimes_map;
+MAPSTRINGSTRING lock_map;
+MAPSTRINGSTRING chamber_map;
+
 
 
 void InitMapfiles()
 {
-//     if (exists_file(std::string("bridge.json")))
-//     {
-//         int NoID = -1;
-//         std::ifstream ifs("bridge.json");
-//         json all = json::parse(ifs);
-//         json result = all["Result"];
-//         for (auto i : result) 
-//         {
-//             std::string s = i.dump();
-//             long l;
-//             if ( s.find("\"IsrsId\":") != std::string::npos ) //If there is no "ID" key we would get an exception!
-//             {
-//                 l = i.at("IsrsId");                    
-//             }
-//             else
-//                { l = NoID; NoID--; }
-//             
-//             bridge_map.insert(MAPSTRINGSTRING::value_type( l, s ) );
-//         } 
-//         std::cout << "bridge_map.size():  " <<  bridge_map.size() << " " << NoID << std::endl;
-//     }    
+    if (exists_file(std::string("bridge.json")))
+    {
+        int NoID = -1;
+        std::ifstream ifs("bridge.json");
+        json all = json::parse(ifs);
+        json result = all["Result"];
+        for (auto i : result) 
+        {
+            std::string s = i.dump();
+            long l;
+            if ( s.find("\"IsrsId\":") != std::string::npos ) //If there is no "ID" key we would get an exception!
+            {
+                l = i.at("IsrsId");                    
+            }
+            else
+               { l = NoID; NoID--; }
+            
+            bridge_map.insert(MAPSTRINGSTRING::value_type( l, s ) );
+        } 
+        std::cout << "bridge_map.size():  " <<  bridge_map.size() << " " << NoID << std::endl;
+    }    
     if (exists_file(std::string("opening.json")))
     {
         int NoID = -1;
@@ -160,5 +163,48 @@ void InitMapfiles()
         } 
         std::cout << "operatingtimes_map.size():  " <<  operatingtimes_map.size() << " " << NoID << std::endl;
     }    
+    
+    if (exists_file(std::string("lock.json")))
+    {
+        int NoID = -1;
+        std::ifstream ifs("lock.json");
+        json all = json::parse(ifs);
+        json result = all["Result"];
+        for (auto i : result) 
+        {
+            std::string s = i.dump();
+            long l;
+            if ( s.find("\"Id\":") != std::string::npos ) //If there is no "ID" key we would get an exception!
+            {
+                l = i.at("Id");                    
+            }
+            else
+               { l = NoID; NoID--; }
+            
+            lock_map.insert(MAPSTRINGSTRING::value_type( l, s ) );
+        } 
+        std::cout << "lock_map.size():  " <<  lock_map.size() << " " << NoID << std::endl;
+    }  
+    if (exists_file(std::string("chamber.json")))
+    {
+        int NoID = -1;
+        std::ifstream ifs("chamber.json");
+        json all = json::parse(ifs);
+        json result = all["Result"];
+        for (auto i : result) 
+        {
+            std::string s = i.dump();
+            long l;
+            if ( s.find("\"Id\":") != std::string::npos ) //If there is no "ID" key we would get an exception!
+            {
+                l = i.at("Id");                    
+            }
+            else
+               { l = NoID; NoID--; }
+            
+            chamber_map.insert(MAPSTRINGSTRING::value_type( l, s ) );
+        } 
+        std::cout << "chamber_map.size():  " <<  chamber_map.size() << " " << NoID << std::endl;
+    }  
 }
 

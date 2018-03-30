@@ -18,6 +18,8 @@
 
 #include "gpx.h"
 
+extern RWSbridges* gpxObj;
+
 RWSbridges::RWSbridges( const char* fname)
 {
     filename = fname;

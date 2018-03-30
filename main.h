@@ -24,6 +24,7 @@
 #include "nlohmann/json.hpp"
 #include "readfiles.h"
 
+typedef std::map <long, std::string> MAPSTRINGSTRING;
 
 void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &bridge_map, std::string mapindex);
 void GetGeoGeneration();
