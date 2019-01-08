@@ -19,6 +19,7 @@
 #include "gpx.h"
 
 extern RWSbridges* gpxObj;
+int ScaMin;
 
 RWSbridges::RWSbridges( const char* fname)
 {
@@ -46,6 +47,17 @@ void RWSbridges::AddWaypoint(std::string lat, std::string lon, std::string name,
     gpx->LinkEndChild( wpt );
         wpt->SetAttribute("lat", lat);
         wpt->SetAttribute("lon", lon);
+        
+    if ( ScaMin){
+        TiXmlElement * Ext = new TiXmlElement( "extensions" );
+        wpt->LinkEndChild( Ext );        
+            TiXmlElement * sca_min = new TiXmlElement( "opencpn:scale_min_max" );
+            Ext->LinkEndChild( sca_min );
+            std::string str = std::to_string(ScaMin);
+            sca_min->SetAttribute( "UseScale", "true" );
+            sca_min->SetAttribute( "ScaleMin", str );
+    }
+ 
         
     TiXmlElement * aname = new TiXmlElement( "name" );
     wpt->LinkEndChild( aname );

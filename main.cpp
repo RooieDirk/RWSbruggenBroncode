@@ -53,6 +53,7 @@ bool Active;
 std::string PublicationDate;
 std::string fbridges  = "bridges.gpx";
 int TotalCount;
+extern int ScaMin;
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -194,8 +195,14 @@ void DoDownload(std::string SerName, std::string fname)
     o.close();
 }
 
-int main(int argc, char **argv)
+int main ( int argc, char *argv[] )
 {
+    // Check the number of parameters
+    if (argc < 2)
+        ScaMin = 0;
+    else
+        ScaMin = atoi(argv[1]);
+
     GetGeoGeneration();
     DownloadIntoMap( std::string("lock"), lock_map, std::string("Id"));
     DownloadIntoMap( std::string("chamber"), chamber_map, std::string("Id"));
@@ -206,10 +213,16 @@ int main(int argc, char **argv)
     DownloadIntoMap(std::string("opening"), opening_map, std::string("Id"));
     DownloadIntoMap(std::string("radiocallinpoint"), radiocallinpoint_map, std::string("ParentId"));
 //    InitMapfiles(); // Only if read from files instead of reading from www
+    std::array<char, 64> buffer;
+    buffer.fill(0);
+    time_t rawtime;
+    time(&rawtime);
+    const auto timeinfo = localtime(&rawtime);
+    strftime(buffer.data(), sizeof(buffer), "%d-%m-%Y %H:%M", timeinfo);
+    std::string timeStr(buffer.data());
     
     gpxObj = new RWSbridges("RWS_Bruggen.gpx");
-        gpxObj->OpenGpxFile(std::string( "vandaag" ));
-    
+        gpxObj->OpenGpxFile(std::string( timeStr ));
     makebridgetext();
     makelocktext();
     
