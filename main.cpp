@@ -20,10 +20,10 @@
 #include "readfiles.h"
 #include "makedesctext.h"
 #include "gpx.h"
+#include "log.h"
 #include <stdio.h>
 #include <fstream>
 #include <curl/curl.h>
-
 
 
 // for convenience
@@ -54,6 +54,7 @@ std::string PublicationDate;
 std::string fbridges  = "bridges.gpx";
 int TotalCount;
 extern int ScaMin;
+char buffer[256];
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -61,25 +62,51 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
     return size * nmemb;
 }
 
-void GetGeoGeneration()
+void GetInternetData(std::string &ReadBuffer, std::string url)
 {
     CURL *curl;
     CURLcode res;
+    char errbuf[CURL_ERROR_SIZE] ;
+    curl = curl_easy_init();
+     
+    if(curl) {
+            //curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str() ); 
+            // provide a buffer to store errors in */
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf); 
+            // set the error buffer as empty before performing a request */
+        errbuf[0] = 0;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ReadBuffer);
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl); 
+        if (res != CURLE_OK ){
+            size_t len = strlen(errbuf);
+            if(len)
+                sprintf( buffer, "libcurl: (%d) %s", res, errbuf );
+            else
+                sprintf( buffer, "libcurl: (%d) ", res );
+            
+            log(buffer);
+        }
+    }
+    else
+        log("Curl did not initialize!");
+
+}
+
+void GetGeoGeneration()
+{
     std::string readBuffer;
     std::string s = ServerAdress + "geogeneration" ;
+    GetInternetData( readBuffer, s);
 
-    curl = curl_easy_init();
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, s.c_str() ); 
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        res = curl_easy_perform(curl);
-        curl_easy_cleanup(curl);       
-        json j = json::parse(readBuffer);
-        GeoGeneration = j["GeoGeneration"];
-        Active = j["Active"];
-        PublicationDate = j["PublicationDate"];
-    }        
+    log(readBuffer.c_str());
+    
+    json j = json::parse(readBuffer);
+    GeoGeneration = j["GeoGeneration"];
+    Active = j["Active"];
+    PublicationDate = j["PublicationDate"];
 }
 
 void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &the_map, std::string mapindex)
@@ -87,51 +114,40 @@ void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &the_map, std::str
     json all;
     json result;
     int TotalCount = 1;
-    
+    std::string logtext("Downloading " + rwsfilename);
+    log( logtext.c_str() );
     for (int i = 0; i < TotalCount; i=i+100)// get the bridges 1 by 1   TotalCount
     {
-        CURL *curl;
-        CURLcode res;
         std::string readBuffer;
         std::string s = ServerAdress + std::to_string(GeoGeneration) + "/" + rwsfilename + "?offset=" + std::to_string(i) + "&count=100";
         
-        std::cout <<  s  << "\r" << std::endl ;
+        GetInternetData( readBuffer, s);
 
-        curl = curl_easy_init();
-        if(curl) {
-            curl_easy_setopt(curl, CURLOPT_URL, s.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-            res = curl_easy_perform(curl);
-            curl_easy_cleanup(curl);
-            if ( i == 0)
+        if ( i == 0)
+        {
+            all  = json::parse(readBuffer);
+            result = all["Result"];
+            TotalCount = (int)all["TotalCount"];
+            std::cout <<  "Total of " << TotalCount << " " << rwsfilename << " to download" ;
+        }
+        else
+        {
+            json j = json::parse(readBuffer);
+            json r = j["Result"];
+            for (int ii  = 0; ii < r.size(); ii++ )
             {
-                all  = json::parse(readBuffer);
-                result = all["Result"];
-                TotalCount = (int)all["TotalCount"];
+                result[result.size()] = r[ii];
+                std::cout <<  "."  ;
             }
-            else
-            {
-                json j = json::parse(readBuffer);
-                json r = j["Result"];
-                for (int ii  = 0; ii < r.size(); ii++ )
-                {
-                    result[result.size()] = r[ii];
-                }
-            }
-        }   
+        }
     }
-//    all["Result"] = result;
-    
-//     if (exists_file(std::string("bridge.json")))
-//     {
+    sprintf( buffer, "Total of %i %s downloaded", TotalCount, rwsfilename.c_str() );
+    log( buffer);
+
         int NoID = -1;
-//         std::ifstream ifs("bridge.json");
- //        json all;// = json::parse(ifs);
- //       result = all["Result"];
+
         for (auto i : result) 
         {
- //           std::string s = i.dump();
             long l;
             json ii = i;
             if ( ii.find( mapindex.c_str() ) != ii.end() ) //If there is no "ID" key we would get an exception!
@@ -143,60 +159,14 @@ void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &the_map, std::str
             
             the_map.insert(MAPSTRINGSTRING::value_type( l, ii.dump() ) );
         } 
-        std::cout << "the_map.size():  " <<  the_map.size() << " " << NoID << std::endl;
-//    }    
-//     o << std::setw(4) << all << std::endl;
-//     o.close();
 }
 
-void DoDownload(std::string SerName, std::string fname)
-{
-    std::ofstream o(fname.c_str() );
-    json all;
-    json result;
-    int TotalCount = 1;
-    
-    for (int i = 0; i < TotalCount; i=i+100)// get the bridges 1 by 1   TotalCount
-    {
-        CURL *curl;
-        CURLcode res;
-        std::string readBuffer;
-        std::string s = ServerAdress + std::to_string(GeoGeneration) + "/" + SerName + "?offset=" + std::to_string(i) + "&count=100";
-        
-        std::cout <<  s  << "\r" << std::endl ;
 
-        curl = curl_easy_init();
-        if(curl) {
-            curl_easy_setopt(curl, CURLOPT_URL, s.c_str());
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-            res = curl_easy_perform(curl);
-            curl_easy_cleanup(curl);
-            if ( i == 0)
-            {
-                all  = json::parse(readBuffer);
-                result = all["Result"];
-                TotalCount = (int)all["TotalCount"];
-            }
-            else
-            {
-                json j = json::parse(readBuffer);
-                json r = j["Result"];
-                for (int ii  = 0; ii < r.size(); ii++ )
-                {
-                    result[result.size()] = r[ii];
-                }
-            }
-        }   
-    }
-    std::cout << std::endl;
-    all["Result"] = result;   
-    o << std::setw(4) << all << std::endl;
-    o.close();
-}
 
 int main ( int argc, char *argv[] )
 {
+    initlog();
+    log("Start logging.");
     // Check the number of parameters
     if (argc < 2)
         ScaMin = 0;

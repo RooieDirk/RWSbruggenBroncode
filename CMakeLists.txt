@@ -7,13 +7,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 cmake_minimum_required(VERSION 2.8)
 
 SET(SRC
-            #src/main.h
+            log.h
             main.cpp 
-            #src/gpx.h
             readfiles.cpp
             makedesctext.cpp
             gpx.cpp
-            #src/nlohmann/json.hpp
+
 	)
 IF(UNIX)
  INCLUDE("cmake/FindTinyXML.cmake")
