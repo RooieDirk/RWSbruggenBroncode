@@ -19,11 +19,12 @@
 #include "gpx.h"
 
 extern RWSbridges* gpxObj;
-int ScaMin;
+int ScaMin = 199999;
+bool DoUseScaMin = true;
 
-RWSbridges::RWSbridges( const char* fname)
+RWSbridges::RWSbridges( std::string fname)
 {
-    filename = fname;
+    filename = fname.c_str();
 }
 void RWSbridges::OpenGpxFile(std::string PubDate)
 {
@@ -48,7 +49,7 @@ void RWSbridges::AddWaypoint(std::string lat, std::string lon, std::string name,
         wpt->SetAttribute("lat", lat);
         wpt->SetAttribute("lon", lon);
         
-    if ( ScaMin){
+    if ( DoUseScaMin){
         TiXmlElement * Ext = new TiXmlElement( "extensions" );
         wpt->LinkEndChild( Ext );        
             TiXmlElement * sca_min = new TiXmlElement( "opencpn:scale_min_max" );

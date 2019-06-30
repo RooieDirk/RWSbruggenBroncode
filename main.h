@@ -29,4 +29,6 @@ typedef std::map <long, std::string> MAPSTRINGSTRING;
 void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &bridge_map, std::string mapindex);
 void GetGeoGeneration();
 void GetInternetData(std::string &ReadBuffer, std::string url);
+void WriteConfigFile( const char* filename);
+int ReadConfigFile( char* filename);
 #endif // MAIN_H

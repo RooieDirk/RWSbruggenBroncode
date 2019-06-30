@@ -38,7 +38,7 @@
 class RWSbridges// : public RWSobjects
 {
 public:
-    RWSbridges( const char* filename);
+    RWSbridges( std::string filename);
     void OpenGpxFile(std::string PubDate);
     void CloseGpxFile(void);
     void AddWaypoint(std::string lat, std::string lon, std::string name, std::string symbol, std::string description);

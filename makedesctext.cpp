@@ -356,7 +356,7 @@ bool GetLatLonFromPOINT(std::string point, std::string &lat, std::string &lon)
         returnval = false;
      else
         lon = lon.substr(0, p+4); // reduce to for digits behind decimal
-    if ( 7.2 < ::atof(lon.c_str()) )
+    if ( 7.25 < ::atof(lon.c_str()) )
         returnval = false;
     if ( 50.8 > ::atof(lat.c_str()) )
         returnval = false;

@@ -8,11 +8,10 @@ cmake_minimum_required(VERSION 2.8)
 
 SET(SRC
             log.h
-            main.cpp 
+            main.cpp
             readfiles.cpp
             makedesctext.cpp
             gpx.cpp
-
 	)
 IF(UNIX)
  INCLUDE("cmake/FindTinyXML.cmake")

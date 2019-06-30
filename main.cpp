@@ -18,6 +18,7 @@
 #include <iostream>
 #include "main.h"
 #include "readfiles.h"
+//#include "init.h"
 #include "makedesctext.h"
 #include "gpx.h"
 #include "log.h"
@@ -50,10 +51,12 @@ extern MAPSTRINGSTRING chamber_map;
 std::string ServerAdress = "https://www.vaarweginformatie.nl/wfswms/dataservice/1.3/";
 int GeoGeneration;
 bool Active;
+bool NeedValidSslCert = false;
 std::string PublicationDate;
-std::string fbridges  = "bridges.gpx";
-int TotalCount;
+std::string OutputFileName  = "RWS_bridges.gpx";
+int TotalCount, WriteCounter = 0;
 extern int ScaMin;
+extern bool DoUseScaMin;
 char buffer[256];
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
@@ -70,6 +73,12 @@ void GetInternetData(std::string &ReadBuffer, std::string url)
     curl = curl_easy_init();
      
     if(curl) {
+        if ( NeedValidSslCert ){
+            res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+            if (res != CURLE_OK ){
+                log("SSL certificate error");
+            }
+        }
             //curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str() ); 
             // provide a buffer to store errors in */
@@ -162,16 +171,54 @@ void DownloadIntoMap(std::string rwsfilename, MAPSTRINGSTRING &the_map, std::str
 }
 
 
+void WriteConfigFile( const char* filename)
+{
+   json j_object = {{"Url", "https://www.vaarweginformatie.nl/wfswms/dataservice/1.3/"},
+                    {"OutputFileName", "RWS_bridges.gpx"},
+                    {"DoUseScaMin", true},
+                    {"ScaMin", 199999},
+                    {"NeedValidSslCert", false}
+       
+};
+    std::ofstream out(filename);
+    //out << "RWSbridges configuration:" << '\n';
+    out << j_object.dump(4) << "\n\n";
+    out.close();
+}
+
+int ReadConfigFile( const char* filename)
+{
+    std::ifstream in(filename);
+    if (in)
+    {        
+       json conf = json::parse(in);
+        
+        ServerAdress = conf["Url"];
+        OutputFileName = conf["OutputFileName"];
+        DoUseScaMin = conf["DoUseScaMin"];
+        ScaMin = conf["ScaMin"];
+        NeedValidSslCert = conf["NeedValidSslCert"];
+    }
+    else
+    {
+        WriteConfigFile(filename);
+        if(WriteCounter)
+        {
+            log("Did try to write a new config file but it doesn't work");
+            return 1;
+        }
+        WriteCounter++;
+        
+    }
+
+    return 0;
+}
 
 int main ( int argc, char *argv[] )
 {
     initlog();
     log("Start logging.");
-    // Check the number of parameters
-    if (argc < 2)
-        ScaMin = 0;
-    else
-        ScaMin = atoi(argv[1]);
+    ReadConfigFile("rws_bruggen.conf");
 
     GetGeoGeneration();
     DownloadIntoMap( std::string("lock"), lock_map, std::string("Id"));
@@ -191,7 +238,7 @@ int main ( int argc, char *argv[] )
     strftime(buffer.data(), sizeof(buffer), "%d-%m-%Y %H:%M", timeinfo);
     std::string timeStr(buffer.data());
     
-    gpxObj = new RWSbridges("RWS_Bruggen.gpx");
+    gpxObj = new RWSbridges(OutputFileName);
         gpxObj->OpenGpxFile(std::string( timeStr ));
     makebridgetext();
     makelocktext();
