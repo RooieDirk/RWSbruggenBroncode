@@ -72,7 +72,7 @@ void GetInternetData(std::string &ReadBuffer, std::string url)
     curl = curl_easy_init();
      
     if(curl) {
-        if ( NeedValidSslCert ){
+        if ( !NeedValidSslCert ){
             res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
             if (res != CURLE_OK ){
                 log("SSL certificate error");
