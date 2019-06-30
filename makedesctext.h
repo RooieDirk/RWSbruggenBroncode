@@ -35,6 +35,6 @@ bool GetLatLonFromPOINT(std::string point, std::string &lat, std::string &lon);
 std::string FindCountryCode( long id);
 std::string FindOperatingTimes( long id);
 std::string CalcTimes( long from, long to);
-void OpenGpxObj();
+
 
 #endif // MAKEDESCTEXT_H

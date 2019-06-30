@@ -39,7 +39,7 @@ class RWSbridges// : public RWSobjects
 {
 public:
     RWSbridges( std::string filename);
-    void OpenGpxFile(std::string PubDate);
+    void OpenGpxFile( std::string PubDate);
     void CloseGpxFile(void);
     void AddWaypoint(std::string lat, std::string lon, std::string name, std::string symbol, std::string description);
     bool isDocLoaded;

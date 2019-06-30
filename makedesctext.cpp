@@ -24,6 +24,7 @@
 #include "gpx.h"
 #include "nlohmann/json.hpp"
 #include "tinyxml/tinyxml.h"
+#include <stdlib.h>
 
 using json = nlohmann::json;
 
@@ -46,12 +47,6 @@ std::string SymbolFile;
 //MAPSTRINGSTRING DescText_map;
 
 std::vector<std::string> months = {"**", " jan", " feb", " mrt", " apr", " mei", " jun", " jul", " aug", " sep", " okt", " nov", " dec"};
-
-void OpenGpxObj()
-{
-    gpxObj = new RWSbridges("RWS_Bruggen.gpx");
-        gpxObj->OpenGpxFile(std::string( "vandaag" ));
-}
 
 void makebridgetext()
 {
@@ -356,7 +351,7 @@ bool GetLatLonFromPOINT(std::string point, std::string &lat, std::string &lon)
         returnval = false;
      else
         lon = lon.substr(0, p+4); // reduce to for digits behind decimal
-    if ( 7.25 < ::atof(lon.c_str()) )
+    if ( 7.3 < ::atof(lon.c_str()) )
         returnval = false;
     if ( 50.8 > ::atof(lat.c_str()) )
         returnval = false;

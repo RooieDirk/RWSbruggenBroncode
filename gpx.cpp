@@ -17,6 +17,11 @@
  */
 
 #include "gpx.h"
+#include <iostream>
+#include <stdio.h>
+#include <fstream>
+#include <cstring>
+#include <string>
 
 extern RWSbridges* gpxObj;
 int ScaMin = 199999;
@@ -24,10 +29,12 @@ bool DoUseScaMin = true;
 
 RWSbridges::RWSbridges( std::string fname)
 {
-    filename = fname.c_str();
+    char * cstr = new char [fname.length()+1];
+    std::strcpy (cstr, fname.c_str());
+    filename = cstr;
 }
-void RWSbridges::OpenGpxFile(std::string PubDate)
-{
+void RWSbridges::OpenGpxFile( std::string PubDate)
+{   
     TiXmlDeclaration * decl = new TiXmlDeclaration( "1.0", "", "" );
     XmlDoc.LinkEndChild( decl );
     gpx = new TiXmlElement( "gpx" );  
@@ -36,6 +43,7 @@ void RWSbridges::OpenGpxFile(std::string PubDate)
         gpx->SetAttribute("TimeStamp", PubDate.c_str());
     isDocLoaded = true;    
 }
+
 void RWSbridges::CloseGpxFile()
 {
     XmlDoc.SaveFile(filename);

@@ -18,7 +18,6 @@
 #include <iostream>
 #include "main.h"
 #include "readfiles.h"
-//#include "init.h"
 #include "makedesctext.h"
 #include "gpx.h"
 #include "log.h"
@@ -239,7 +238,7 @@ int main ( int argc, char *argv[] )
     std::string timeStr(buffer.data());
     
     gpxObj = new RWSbridges(OutputFileName);
-        gpxObj->OpenGpxFile(std::string( timeStr ));
+        gpxObj->OpenGpxFile( std::string( timeStr ));
     makebridgetext();
     makelocktext();
     
